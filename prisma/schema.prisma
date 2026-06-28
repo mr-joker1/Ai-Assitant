@@ -1,0 +1,428 @@
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AssetType {
+  STOCK
+  CRYPTO
+  ETF
+}
+
+enum ComplianceStatus {
+  HALAL
+  HARAM
+  TOLERATED
+  QUESTIONABLE
+}
+
+enum BusinessType {
+  RESTAURANT
+  FACTORY
+  AGENCY
+  SOFTWARE
+  MANUFACTURING
+  SERVICES
+  SHOP
+  ECOMMERCE
+}
+
+enum PurificationStatus {
+  PENDING
+  PURIFIED
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  name                String?
+  email               String?              @unique
+  emailVerified       DateTime?
+  image               String?
+  password            String?              // Hashed password for Credentials login
+  role                Role                 @default(USER)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+  watchlists          WatchlistItem[]
+  portfolios          Portfolio[]
+  zakatCalculations   ZakatCalculation[]
+  purificationRecords PurificationRecord[]
+  progress            UserProgress[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+}
+
+model Account {
+  id                String  @id @default(uuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Company {
+  id               String            @id @default(uuid())
+  symbol           String            @unique
+  name             String
+  sector           String?
+  industry         String?
+  exchange         String?
+  currency         String?           @default("USD")
+  logoUrl          String?
+  currentPrice     Float             @default(0.0)
+  lastPriceUpdate  DateTime          @default(now())
+  isHalal          Boolean           @default(false)
+  confidenceScore  Float             @default(0.0)
+  complianceScore  Float             @default(0.0)
+  methodology      String            @default("AAOIFI")
+  explanation      String?           @db.Text
+  businessSummary  String?           @db.Text
+  lastScreenedAt   DateTime          @default(now())
+  isCached         Boolean           @default(false)
+  segments         BusinessSegment[]
+  ratios           FinancialRatio[]
+  complianceRecord ComplianceHistory[]
+  opinions         ScholarOpinion[]
+}
+
+model BusinessSegment {
+  id         String   @id @default(uuid())
+  companyId  String
+  name       String
+  revenue    Float
+  percentage Float    // 0.0 to 100.0
+  isHalal    Boolean  @default(true)
+  reason     String?
+  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model FinancialRatio {
+  id                     String   @id @default(uuid())
+  companyId              String
+  date                   DateTime @default(now())
+  debtToMarketCap        Float    // percentage
+  liquidAssetsToTotalAssets Float // percentage
+  cashToMarketCap        Float    // percentage
+  receivablesToMarketCap Float    // percentage
+  interestIncomeToRevenue Float   // percentage
+  complianceResult       Boolean  @default(false)
+  company                Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model ComplianceHistory {
+  id                  String   @id @default(uuid())
+  companyId           String
+  symbol              String
+  timestamp           DateTime @default(now())
+  methodology         String
+  debtRatio           Float
+  cashRatio           Float
+  receivablesRatio    Float
+  interestIncomeRatio Float
+  result              Boolean
+  purificationAmount  Float    @default(0.0)
+  reason              String?  @db.Text
+  company             Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+model WatchlistItem {
+  id        String    @id @default(uuid())
+  userId    String
+  symbol    String
+  name      String
+  assetType AssetType
+  addedAt   DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol, assetType])
+}
+
+model CryptoToken {
+  id                     String           @id @default(uuid())
+  symbol                 String           @unique
+  name                   String
+  coingeckoId            String           @unique
+  price                  Float            @default(0.0)
+  lastPriceUpdate        DateTime         @default(now())
+  logoUrl                String?
+  consensusType          String?          // e.g. PoW, PoS
+  miningCompliance       Boolean          @default(true)
+  stakingCompliance      Boolean          @default(true)
+  governanceCompliance   Boolean          @default(true)
+  tokenomicsCompliance   Boolean          @default(true)
+  whitepaperSummary      String?          @db.Text
+  complianceStatus       ComplianceStatus @default(QUESTIONABLE)
+  riskScore              Float            @default(0.0)
+  defiExposure           String?          @db.Text
+  lastScreenedAt         DateTime         @default(now())
+  opinions               ScholarOpinion[]
+}
+
+model Fatwa {
+  id           String                      @id @default(uuid())
+  title        String
+  category     String
+  summary      String                      @db.Text
+  content      String                      @db.Text
+  source       String?
+  date         DateTime?
+  scholarName  String?
+  citationLink String?
+  embedding    Unsupported("vector(1536)")? // for text-embedding-3-small vectors
+  createdAt    DateTime                    @default(now())
+}
+
+model Scholar {
+  id                 String           @id @default(uuid())
+  name               String
+  title              String?
+  profileImageUrl    String?
+  bio                String?          @db.Text
+  methodology        String           @default("AAOIFI")
+  publications       String?          @db.Text
+  videos             String?          @db.Text
+  majorityOpinions   String?          @db.Text
+  conflictingOpinions String?         @db.Text
+  rating             Float            @default(5.0)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  opinions           ScholarOpinion[]
+}
+
+model ScholarOpinion {
+  id            String           @id @default(uuid())
+  scholarId     String
+  scholarName   String
+  companySymbol String?          // For stocks/ETFs
+  cryptoSymbol  String?          // For crypto
+  opinion       ComplianceStatus @default(QUESTIONABLE)
+  reasoning     String           @db.Text
+  evidence      String           @db.Text
+  source        String?
+  createdAt     DateTime         @default(now())
+  scholar       Scholar          @relation(fields: [scholarId], references: [id], onDelete: Cascade)
+  company       Company?         @relation(fields: [companySymbol], references: [symbol], onDelete: Cascade)
+  cryptoToken   CryptoToken?     @relation(fields: [cryptoSymbol], references: [symbol], onDelete: Cascade)
+}
+
+model Startup {
+  id                  String   @id @default(uuid())
+  userId              String
+  name                String
+  pitchDeckUrl        String?
+  website             String?
+  businessActivities  String?  @db.Text
+  revenueModel        String?  @db.Text
+  fundingAmount       Float    @default(0.0)
+  loansAmount         Float    @default(0.0)
+  investmentsAmount   Float    @default(0.0)
+  contractsDetails    String?  @db.Text
+  complianceScore     Float    @default(0.0)
+  halalStatus         Boolean  @default(false)
+  reasons             String?  @db.Text
+  evidence            String?  @db.Text
+  suggestions         String?  @db.Text
+  createdAt           DateTime @default(now())
+}
+
+model Business {
+  id                   String       @id @default(uuid())
+  userId               String
+  name                 String
+  type                 BusinessType
+  incomeSources        String?      @db.Text
+  prohibitedActivities String?      @db.Text
+  loansAmount          Float        @default(0.0)
+  investmentsAmount    Float        @default(0.0)
+  complianceStatus     Boolean      @default(false)
+  suggestions          String?      @db.Text
+  createdAt            DateTime     @default(now())
+}
+
+model Portfolio {
+  id                String             @id @default(uuid())
+  userId            String
+  name              String
+  totalValue        Float              @default(0.0)
+  compliancePercent Float              @default(100.0)
+  purificationDue   Float              @default(0.0)
+  riskScore         Float              @default(0.0)
+  sectorAllocation  String?            @db.Text // JSON string
+  assetAllocation   String?            @db.Text // JSON string
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  holdings          PortfolioHolding[]
+}
+
+model PortfolioHolding {
+  id              String           @id @default(uuid())
+  portfolioId     String
+  symbol          String
+  name            String
+  assetType       AssetType
+  quantity        Float
+  avgPrice        Float
+  totalValue      Float
+  complianceStatus ComplianceStatus @default(QUESTIONABLE)
+  purificationDue Float            @default(0.0)
+  portfolio       Portfolio        @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+}
+
+model ZakatCalculation {
+  id             String   @id @default(uuid())
+  userId         String
+  cashAmount     Float    @default(0.0)
+  goldWeight     Float    @default(0.0) // grams
+  silverWeight   Float    @default(0.0) // grams
+  stocksValue    Float    @default(0.0)
+  cryptoValue    Float    @default(0.0)
+  businessAssets Float    @default(0.0)
+  receivables    Float    @default(0.0)
+  liabilities    Float    @default(0.0)
+  totalZakat     Float    @default(0.0)
+  date           DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PurificationRecord {
+  id                String             @id @default(uuid())
+  userId            String
+  type              String             // e.g. "DIVIDEND", "INTEREST", "OTHER"
+  source            String
+  amount            Float
+  status            PurificationStatus @default(PENDING)
+  purifiedAt        DateTime?
+  donationRecipient String?
+  createdAt         DateTime           @default(now())
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model LearningCourse {
+  id          String           @id @default(uuid())
+  title       String
+  description String           @db.Text
+  category    String           // e.g. "Basics", "Shariah Screening", "Zakat"
+  difficulty  String           // e.g. "Beginner", "Intermediate", "Advanced"
+  duration    Int              // in minutes
+  xpReward    Int              @default(100)
+  isPublished Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  lessons     LearningLesson[]
+}
+
+model LearningLesson {
+  id            String         @id @default(uuid())
+  courseId      String
+  title         String
+  content       String         @db.Text
+  sequenceOrder Int
+  xpReward      Int            @default(50)
+  course        LearningCourse @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  quizzes       LearningQuiz[]
+}
+
+model LearningQuiz {
+  id                 String         @id @default(uuid())
+  lessonId           String
+  question           String
+  optionsJson        String         @db.Text // serialized string array
+  correctAnswerIndex Int
+  points             Int            @default(10)
+  lesson             LearningLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model UserProgress {
+  id           String         @id @default(uuid())
+  userId       String
+  courseId     String
+  lessonId     String
+  completedAt  DateTime       @default(now())
+  quizScore    Int            @default(0)
+  xpEarned     Int            @default(0)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NewsArticle {
+  id               String   @id @default(uuid())
+  title            String
+  description      String?  @db.Text
+  content          String?  @db.Text
+  source           String
+  url              String   @unique
+  publishedAt      DateTime
+  imageUrl         String?  @db.Text
+  category         String   @default("GENERAL") // STOCK, CRYPTO, SHARIAH, SUKUK, GENERAL
+  symbolTags       String?  // comma-separated tags
+  isIslamicFinance Boolean  @default(false)
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String   @db.Text
+  type      String   @default("SYSTEM") // COMPLIANCE_CHANGE, PRICE_ALERT, SYSTEM, ZAKAT
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  userEmail String?
+  action    String
+  details   String?  @db.Text
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model ConfigThreshold {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  value       Float
+  description String?
+  updatedAt   DateTime @updatedAt
+}

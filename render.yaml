@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: ai-system-assistant
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: AUTH_TRUST_HOST
+        value: "true"
+      - key: AUTH_GOOGLE_ID
+        sync: false
+      - key: AUTH_GOOGLE_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FMP_API_KEY
+        sync: false
+      - key: COINGECKO_API_KEY
+        sync: false
+      - key: GNEWS_API_KEY
+        sync: false
+      - key: NEWSAPI_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

@@ -1,0 +1,143 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --shadow-premium: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03);
+  --shadow-premium-dark: 0 4px 20px -2px rgba(0, 0, 0, 0.3), 0 2px 8px -1px rgba(0, 0, 0, 0.2);
+}
+
+:root {
+  --background: oklch(0.98 0.005 60); /* Warm light ivory */
+  --foreground: oklch(0.15 0.02 240); /* Deep slate-gray */
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.02 240);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.02 240);
+
+  /* Deep Emerald primary for Shariah trust */
+  --primary: oklch(0.28 0.07 165);
+  --primary-foreground: oklch(0.98 0.005 60);
+
+  /* Warm gold secondary */
+  --secondary: oklch(0.95 0.02 85);
+  --secondary-foreground: oklch(0.25 0.05 85);
+
+  --muted: oklch(0.93 0.01 240);
+  --muted-foreground: oklch(0.45 0.02 240);
+
+  --accent: oklch(0.78 0.12 85); /* Rich bronze gold */
+  --accent-foreground: oklch(0.15 0.02 240);
+
+  --destructive: oklch(0.60 0.18 29);
+  --destructive-foreground: oklch(0.98 0.005 60);
+
+  --border: oklch(0.90 0.01 240);
+  --input: oklch(0.90 0.01 240);
+  --ring: oklch(0.28 0.07 165);
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: oklch(0.14 0.015 240); /* Deep navy-slate (NOT pitch black) */
+  --foreground: oklch(0.93 0.01 240);
+
+  --card: oklch(0.17 0.015 240);
+  --card-foreground: oklch(0.93 0.01 240);
+
+  --popover: oklch(0.17 0.015 240);
+  --popover-foreground: oklch(0.93 0.01 240);
+
+  --primary: oklch(0.85 0.06 165); /* Minty emerald */
+  --primary-foreground: oklch(0.14 0.015 240);
+
+  --secondary: oklch(0.22 0.015 240);
+  --secondary-foreground: oklch(0.93 0.01 240);
+
+  --muted: oklch(0.22 0.015 240);
+  --muted-foreground: oklch(0.65 0.02 240);
+
+  --accent: oklch(0.78 0.12 85);
+  --accent-foreground: oklch(0.14 0.015 240);
+
+  --destructive: oklch(0.55 0.18 29);
+  --destructive-foreground: oklch(0.98 0.005 60);
+
+  --border: oklch(0.25 0.015 240);
+  --input: oklch(0.25 0.015 240);
+  --ring: oklch(0.85 0.06 165);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Premium Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Custom visual styling helpers */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.dark .glass-panel {
+  background: rgba(18, 24, 38, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
