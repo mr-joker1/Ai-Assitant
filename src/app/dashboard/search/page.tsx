@@ -138,7 +138,7 @@ export default function SearchPage() {
             {results.companies.length > 0 && (
               <section className="space-y-3">
                 <h3 className="font-semibold text-foreground flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" /> Stocks & Equities
+                  <TrendingUp className="w-4 h-4 text-primary" /> Stocks &amp; Equities
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {results.companies.map((c) => (
@@ -147,20 +147,32 @@ export default function SearchPage() {
                       href={`/dashboard/company?symbol=${c.symbol}`}
                       className="bg-card p-4 rounded-xl border border-border hover:border-primary/30 hover:shadow-sm transition-all flex items-center gap-3"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center font-bold text-sm text-foreground">
-                        {c.symbol[0]}
-                      </div>
+                      {c.logoUrl ? (
+                        <img src={c.logoUrl} alt={c.symbol} className="w-10 h-10 rounded-lg object-contain bg-secondary p-1" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center font-bold text-sm text-foreground">
+                          {c.symbol?.[0]}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground text-sm">{c.symbol}</span>
-                          <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-bold", c.isHalal ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive")}>
-                            {c.isHalal ? "HALAL" : "HARAM"}
-                          </span>
+                          {c.isLive ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-secondary text-muted-foreground">
+                              Screen Now →
+                            </span>
+                          ) : (
+                            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-bold", c.isHalal ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive")}>
+                              {c.isHalal ? "HALAL" : "HARAM"}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{c.name}</p>
                         <p className="text-xs text-muted-foreground">{c.sector}</p>
                       </div>
-                      <span className="text-sm font-semibold text-foreground">${c.currentPrice?.toFixed(2)}</span>
+                      {!c.isLive && c.currentPrice != null && (
+                        <span className="text-sm font-semibold text-foreground">${c.currentPrice?.toFixed(2)}</span>
+                      )}
                     </Link>
                   ))}
                 </div>
@@ -180,29 +192,42 @@ export default function SearchPage() {
                       href={`/dashboard/crypto?symbol=${c.symbol}`}
                       className="bg-card p-4 rounded-xl border border-border hover:border-primary/30 hover:shadow-sm transition-all flex items-center gap-3"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center font-bold text-sm text-foreground">
-                        {c.symbol[0]}
-                      </div>
+                      {c.logoUrl ? (
+                        <img src={c.logoUrl} alt={c.symbol} className="w-10 h-10 rounded-lg object-contain bg-secondary p-1" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center font-bold text-sm text-foreground">
+                          {c.symbol?.[0]}
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-foreground text-sm">{c.symbol}</span>
-                          <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-bold",
-                            c.complianceStatus === "HALAL" ? "bg-primary/10 text-primary" :
-                            c.complianceStatus === "HARAM" ? "bg-destructive/10 text-destructive" :
-                            "bg-accent/10 text-accent"
-                          )}>
-                            {c.complianceStatus}
-                          </span>
+                          {c.isLive ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold bg-secondary text-muted-foreground">
+                              Screen Now →
+                            </span>
+                          ) : (
+                            <span className={cn("text-[10px] px-1.5 py-0.5 rounded-full font-bold",
+                              c.complianceStatus === "HALAL" ? "bg-primary/10 text-primary" :
+                              c.complianceStatus === "HARAM" ? "bg-destructive/10 text-destructive" :
+                              "bg-accent/10 text-accent"
+                            )}>
+                              {c.complianceStatus}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-muted-foreground truncate">{c.name}</p>
                         <p className="text-xs text-muted-foreground">{c.consensusType}</p>
                       </div>
-                      <span className="text-sm font-semibold text-foreground">${c.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                      {!c.isLive && c.price != null && (
+                        <span className="text-sm font-semibold text-foreground">${c.price?.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                      )}
                     </Link>
                   ))}
                 </div>
               </section>
             )}
+
 
             {/* Fatwas */}
             {results.fatwas.length > 0 && (
