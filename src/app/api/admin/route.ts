@@ -12,7 +12,9 @@ async function requireAdmin(req: NextRequest) {
   }
   const user = await db.user.findUnique({ where: { id: session.user.id as string }, select: { role: true } });
   if (user?.role !== "ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 }) };
+    return { error: NextResponse.json({ 
+      error: `Forbidden: Admin access required. Logged in as: ${session.user.email} (Role in DB: ${user?.role || 'NOT_FOUND'}, ID: ${session.user.id})` 
+    }, { status: 403 }) };
   }
   return { userId: session.user.id };
 }
