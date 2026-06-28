@@ -58,7 +58,7 @@ export default function AdminPanel() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/admin?action=${t}`);
+      const res = await fetch(`/api/admin?action=${t}`, { cache: "no-store" });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Access denied");
