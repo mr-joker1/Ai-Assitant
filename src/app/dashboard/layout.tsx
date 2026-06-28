@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Sidebar from "@/components/shared/Sidebar";
-import { Menu, X, Bell, Moon, Sun, User } from "lucide-react";
+import { Menu, X, Bell, Moon, Sun, User, LogOut } from "lucide-react";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 
 export default function DashboardLayout({
   children,
@@ -86,6 +87,16 @@ export default function DashboardLayout({
                 IA
               </div>
             </Link>
+
+            {/* Logout */}
+            <button
+              onClick={() => signOut({ callbackUrl: "/login" })}
+              className="p-2 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors ml-1"
+              aria-label="Logout"
+              title="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </header>
 

@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { z } from "zod";
 
+export const dynamic = "force-dynamic";
+
 async function requireAdmin(req: NextRequest) {
   const session = await auth();
   if (!session?.user) {
