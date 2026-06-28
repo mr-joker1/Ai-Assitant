@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Shield, Users, Building2, Coins, BookOpen, ClipboardList,
-  Settings, RefreshCw, Check, X, AlertTriangle
+  Settings, RefreshCw, Check, X, AlertTriangle, Sparkles, Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -41,7 +41,7 @@ interface AuditLog {
   createdAt: string;
 }
 
-type TabType = "overview" | "users" | "thresholds" | "audit";
+type TabType = "overview" | "users" | "thresholds" | "audit" | "ai";
 
 export default function AdminPanel() {
   const [tab, setTab] = useState<TabType>("overview");
@@ -53,6 +53,8 @@ export default function AdminPanel() {
   const [editThreshold, setEditThreshold] = useState<Threshold | null>(null);
   const [savingThreshold, setSavingThreshold] = useState(false);
   const [error, setError] = useState("");
+  const [generating, setGenerating] = useState<{ scholars: boolean, fatwas: boolean, courses: boolean }>({ scholars: false, fatwas: false, courses: false });
+  const [successMsg, setSuccessMsg] = useState("");
 
   const fetchData = async (t: TabType) => {
     setLoading(true);
@@ -115,7 +117,29 @@ export default function AdminPanel() {
     { value: "users", label: "Users", icon: Users },
     { value: "thresholds", label: "Screening Thresholds", icon: Settings },
     { value: "audit", label: "Audit Logs", icon: ClipboardList },
+    { value: "ai", label: "AI Population", icon: Sparkles },
   ];
+
+  const handleGenerate = async (type: "scholars" | "fatwas" | "courses") => {
+    setGenerating(prev => ({ ...prev, [type]: true }));
+    setError("");
+    setSuccessMsg("");
+    try {
+      const res = await fetch("/api/admin/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Generation failed");
+      setSuccessMsg(`Successfully generated and inserted ${data.count} new ${type}!`);
+      if (tab === "overview") fetchData("overview"); // refresh stats
+    } catch (err: any) {
+      setError(err.message || "Failed to generate content");
+    } finally {
+      setGenerating(prev => ({ ...prev, [type]: false }));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -132,6 +156,12 @@ export default function AdminPanel() {
         <div className="p-4 rounded-xl bg-destructive/10 text-destructive text-sm flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 flex-shrink-0" />
           {error}
+        </div>
+      )}
+      {successMsg && (
+        <div className="p-4 rounded-xl bg-primary/10 text-primary text-sm flex items-center gap-2">
+          <Check className="w-4 h-4 flex-shrink-0" />
+          {successMsg}
         </div>
       )}
 
@@ -328,6 +358,77 @@ export default function AdminPanel() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* AI Population */}
+          {tab === "ai" && (
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-primary/10 to-accent/5 p-6 rounded-2xl border border-primary/20">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="bg-primary p-2 rounded-xl text-primary-foreground">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <h3 className="text-xl font-bold text-foreground">AI Content Generator</h3>
+                </div>
+                <p className="text-sm text-muted-foreground max-w-2xl mb-6">
+                  Use the Groq/OpenAI APIs to generate authentic, high-quality Islamic Finance content and inject it into your database. 
+                  Due to API limits, you should generate one batch at a time.
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Scholars */}
+                  <div className="bg-card p-5 rounded-xl border border-border shadow-sm flex flex-col items-center text-center space-y-4 hover:border-primary/50 transition-colors">
+                    <div className="bg-secondary p-3 rounded-full text-foreground"><Users className="w-6 h-6" /></div>
+                    <div>
+                      <h4 className="font-bold text-sm">Scholars</h4>
+                      <p className="text-xs text-muted-foreground mt-1">Generates 3 prominent real-world scholars and bios.</p>
+                    </div>
+                    <button 
+                      onClick={() => handleGenerate("scholars")}
+                      disabled={generating.scholars}
+                      className="w-full mt-auto bg-foreground text-background text-sm font-semibold py-2.5 rounded-lg hover:bg-foreground/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {generating.scholars ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      Generate Scholars
+                    </button>
+                  </div>
+
+                  {/* Fatwas */}
+                  <div className="bg-card p-5 rounded-xl border border-border shadow-sm flex flex-col items-center text-center space-y-4 hover:border-primary/50 transition-colors">
+                    <div className="bg-secondary p-3 rounded-full text-foreground"><BookOpen className="w-6 h-6" /></div>
+                    <div>
+                      <h4 className="font-bold text-sm">Fatwas</h4>
+                      <p className="text-xs text-muted-foreground mt-1">Generates 4 authentic fatwas on modern finance (Crypto, Sukuk, etc).</p>
+                    </div>
+                    <button 
+                      onClick={() => handleGenerate("fatwas")}
+                      disabled={generating.fatwas}
+                      className="w-full mt-auto bg-foreground text-background text-sm font-semibold py-2.5 rounded-lg hover:bg-foreground/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {generating.fatwas ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      Generate Fatwas
+                    </button>
+                  </div>
+
+                  {/* Courses */}
+                  <div className="bg-card p-5 rounded-xl border border-border shadow-sm flex flex-col items-center text-center space-y-4 hover:border-primary/50 transition-colors">
+                    <div className="bg-secondary p-3 rounded-full text-foreground"><ClipboardList className="w-6 h-6" /></div>
+                    <div>
+                      <h4 className="font-bold text-sm">Courses</h4>
+                      <p className="text-xs text-muted-foreground mt-1">Generates a complete course with lessons and quizzes.</p>
+                    </div>
+                    <button 
+                      onClick={() => handleGenerate("courses")}
+                      disabled={generating.courses}
+                      className="w-full mt-auto bg-foreground text-background text-sm font-semibold py-2.5 rounded-lg hover:bg-foreground/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {generating.courses ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                      Generate Courses
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
