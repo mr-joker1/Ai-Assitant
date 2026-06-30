@@ -99,6 +99,24 @@ export default function SearchPage() {
           </button>
         </form>
 
+        {/* Recent Searches */}
+        <div className="flex flex-wrap gap-2 items-center text-xs text-muted-foreground pt-1">
+          <span className="font-bold text-[10px] uppercase tracking-wider">Recent:</span>
+          {["MSFT", "AAPL", "BTC", "riba", "purification", "zakat"].map((term) => (
+            <button
+              key={term}
+              type="button"
+              onClick={() => {
+                setQuery(term);
+                doSearch(term, type);
+              }}
+              className="px-2.5 py-1 rounded-lg bg-secondary text-foreground hover:bg-[#00C282] hover:text-white transition-all cursor-pointer text-[11px] font-medium"
+            >
+              {term}
+            </button>
+          ))}
+        </div>
+
         {/* Type Tabs */}
         <div className="flex gap-2 flex-wrap">
           {TYPE_TABS.map((tab) => {
